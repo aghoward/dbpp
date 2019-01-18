@@ -1,0 +1,3 @@
+[submodule "argparsing"]
+	path = argparsing
+	url = git@github.com:aghoward/argparsing.git
