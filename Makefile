@@ -8,11 +8,11 @@ AR_FLAGS +=rcs
 OBJDIR=./obj
 LIBDIR=./lib
 
-OBJECTS=
+OBJECTS=${OBJDIR}/requestfactory.o
 LIBS=
 
-db++: db++.cpp
-	$(GCC) ${CXX_FLAGS} -o $@ $< ${LD_FLAGS} ${LIBS}
+db++: db++.cpp ${OBJECTS}
+	$(GCC) ${CXX_FLAGS} -o $@ $< ${OBJECTS} ${LD_FLAGS} ${LIBS}
 
 ${LIBDIR}:
 	mkdir -p ${LIBDIR}

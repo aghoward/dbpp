@@ -3,15 +3,16 @@
 #include <string>
 #include <vector>
 
-#include <cpr/cpr.h>
-
 #include "argparsing/argparsing.h"
+#include "requestfactory.h"
 
 struct Arguments
 {
     std::string base_url;
     std::string wordlist_file;
     bool recursive;
+    std::string username;
+    std::string password;
 };
 
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
@@ -44,6 +45,18 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::base_url,
             ""s,
             "URL to the server to attempt to find files from"s)
+        .add_optional(
+            "username"s,
+            &Arguments::username,
+            ""s,
+            { "-u"s, "--username"s },
+            "Username for basic authentication"s)
+        .add_optional(
+            "password"s,
+            &Arguments::password,
+            ""s,
+            { "-p"s, "--password"s },
+            "Password for basic authentication"s)
         .build();
 }
 
@@ -64,7 +77,10 @@ bool statusCodeIndicatesExistance(int status_code)
     return status_code != 404 && status_code != 400;
 }
 
-std::vector<std::string> searchServer(const std::string& base_url, const std::vector<std::string>& wordlist)
+std::vector<std::string> searchServer(
+        const std::string& base_url,
+        const std::vector<std::string>& wordlist,
+        const RequestFactory& request_factory)
 {
     using namespace std::string_literals;
     std::vector<std::string> found = {};
@@ -72,12 +88,12 @@ std::vector<std::string> searchServer(const std::string& base_url, const std::ve
     for (const auto& word : wordlist)
     {
         auto url = base_url + "/"s + word;
-        auto fileResponse = cpr::Get(cpr::Url{url});
+        auto fileResponse = request_factory.make_request(url);
         if (statusCodeIndicatesExistance(fileResponse.status_code))
             std::cout << "\"" << url << "\"" << " - " << std::to_string(fileResponse.status_code) << std::endl;
         else
         {
-            auto dirResponse = cpr::Get(cpr::Url{url + "/"s});
+            auto dirResponse = request_factory.make_request(url + "/"s);
             if (statusCodeIndicatesExistance(dirResponse.status_code))
             {
                 std::cout << "\"" << url << "\"" << " - " << std::to_string(dirResponse.status_code) << std::endl;
@@ -89,12 +105,12 @@ std::vector<std::string> searchServer(const std::string& base_url, const std::ve
     return found;
 }
 
-void recursiveSearch(const std::string& base_url, const std::vector<std::string>& wordlist)
+void recursiveSearch(const std::string& base_url, const std::vector<std::string>& wordlist, const RequestFactory& request_factory)
 {
     using namespace std::string_literals;
-    auto hits = searchServer(base_url, wordlist);
+    auto hits = searchServer(base_url, wordlist, request_factory);
     for (const auto& hit : hits)
-        recursiveSearch(hit, wordlist);
+        recursiveSearch(hit, wordlist, request_factory);
 }
 
 int main(int argc, const char * argv[])
@@ -113,10 +129,12 @@ int main(int argc, const char * argv[])
 
     std::cout << args << std::endl;
     std::cout << "wordlist size: " << words.size() << std::endl;
+
+    auto request_factory = RequestFactory(args.username, args.password);
     
     if (args.recursive)
-        recursiveSearch(args.base_url, words);
+        recursiveSearch(args.base_url, words, request_factory);
     else
-        searchServer(args.base_url, words);
+        searchServer(args.base_url, words, request_factory);
     return 0;
 }
