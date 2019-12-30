@@ -1,14 +1,20 @@
+#include <algorithm>
 #include <fstream>
 #include <iostream>
+#include <iterator>
 #include <string>
 #include <vector>
 
 #include "argparsing/argparsing.h"
+#include "logger.h"
 #include "requestfactory.h"
+#include "threadpool.h"
+#include "workqueue.h"
 
 struct Arguments
 {
     std::string base_url;
+    std::string extension;
     std::string wordlist_file;
     bool recursive;
     std::string username;
@@ -57,10 +63,16 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             ""s,
             { "-p"s, "--password"s },
             "Password for basic authentication"s)
+        .add_optional(
+            "extension"s,
+            &Arguments::extension,
+            ""s,
+            { "-e"s, "--extension"s },
+            "File extension to add to all guesses"s)
         .build();
 }
 
-std::vector<std::string> getWordList(const std::string& file)
+std::vector<std::string> get_word_list(const std::string& file)
 {
     auto words = std::vector<std::string>();
     std::ifstream fs(file);
@@ -72,45 +84,80 @@ std::vector<std::string> getWordList(const std::string& file)
     return words;
 }
 
+struct ExecutionContext
+{
+    std::string base_url;
+    std::string extension;
+
+    RequestFactory request_factory;
+    Logger logger;
+
+    ExecutionContext(const std::string& url, const std::string& ext, const RequestFactory& rf)
+        : base_url(url), extension(ext), request_factory(rf), logger()
+    {}
+};
+
 bool statusCodeIndicatesExistance(int status_code)
 {
     return status_code != 404 && status_code != 400;
 }
 
-std::vector<std::string> searchServer(
-        const std::string& base_url,
-        const std::vector<std::string>& wordlist,
-        const RequestFactory& request_factory)
+std::string execute(std::shared_ptr<ExecutionContext> context, const std::string& item)
 {
     using namespace std::string_literals;
-    std::vector<std::string> found = {};
+    auto url = context->base_url + "/"s + item;
+    if (context->extension != ""s)
+        url += "."s + context->extension;
 
-    for (const auto& word : wordlist)
-    {
-        auto url = base_url + "/"s + word;
-        auto fileResponse = request_factory.make_request(url);
-        if (statusCodeIndicatesExistance(fileResponse.status_code))
-            std::cout << "\"" << url << "\"" << " - " << std::to_string(fileResponse.status_code) << std::endl;
-        else
-        {
-            auto dirResponse = request_factory.make_request(url + "/"s);
-            if (statusCodeIndicatesExistance(dirResponse.status_code))
-            {
-                std::cout << "\"" << url << "\"" << " - " << std::to_string(dirResponse.status_code) << std::endl;
-                found.push_back(url);
-            }
-        }
+    auto resp = context->request_factory.make_request(url);
+    if (statusCodeIndicatesExistance(resp.status_code))
+        context->logger.log("\""s + url + "\" - "s + std::to_string(resp.status_code));
+
+    auto dir_resp = context->request_factory.make_request(url + "/"s);
+    if (statusCodeIndicatesExistance(dir_resp.status_code)) {
+        context->logger.log("\""s + url + "/\" - "s + std::to_string(dir_resp.status_code));
+        return url;
     }
 
-    return found;
+    return ""s;
 }
 
-void recursiveSearch(const std::string& base_url, const std::vector<std::string>& wordlist, const RequestFactory& request_factory)
+std::shared_ptr<WorkQueue<std::string, 10>> create_work_queue(const std::string& wordlist_file)
+{
+    auto word_list = get_word_list(wordlist_file);
+    auto work_pool = std::make_shared<WorkQueue<std::string, 10>>();
+    work_pool->add_items(word_list.begin(), word_list.end());
+    return work_pool;
+}
+
+std::vector<std::string> searchServer(const Arguments& args, const std::string& base_url)
 {
     using namespace std::string_literals;
-    auto hits = searchServer(base_url, wordlist, request_factory);
-    for (const auto& hit : hits)
-        recursiveSearch(hit, wordlist, request_factory);
+
+    auto request_factory = RequestFactory(args.username, args.password);
+    auto context = std::make_shared<ExecutionContext>(base_url, args.extension, request_factory);
+
+    auto work_pool = create_work_queue(args.wordlist_file);
+
+    auto thread_pool = ThreadPool([&](const std::string& item) { return execute(context, item); }, work_pool);
+    auto pool_results = thread_pool.execute();
+
+    auto directory_results = std::vector<std::string>{};
+    std::copy_if(pool_results.begin(), pool_results.end(), std::back_inserter(directory_results),
+        [] (const auto& item) { return item != ""s; });
+
+    return directory_results;
+}
+
+void recursive_search_server(const Arguments& args)
+{
+    auto directories = searchServer(args, args.base_url);
+    while (!directories.empty()) {
+        auto dir = directories.back();
+        directories.pop_back();
+        auto results = searchServer(args, dir);
+        std::copy(results.begin(), results.end(), std::back_inserter(directories));
+    }
 }
 
 int main(int argc, const char * argv[])
@@ -125,16 +172,12 @@ int main(int argc, const char * argv[])
 
     auto args = argresult.value();
 
-    auto words = getWordList(args.wordlist_file);
-
     std::cout << args << std::endl;
-    std::cout << "wordlist size: " << words.size() << std::endl;
 
-    auto request_factory = RequestFactory(args.username, args.password);
-    
     if (args.recursive)
-        recursiveSearch(args.base_url, words, request_factory);
+        recursive_search_server(args);
     else
-        searchServer(args.base_url, words, request_factory);
+        searchServer(args, args.base_url);
+
     return 0;
 }

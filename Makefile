@@ -8,7 +8,7 @@ AR_FLAGS +=rcs
 OBJDIR=./obj
 LIBDIR=./lib
 
-OBJECTS=${OBJDIR}/requestfactory.o
+OBJECTS=${OBJDIR}/requestfactory.o ${OBJDIR}/logger.o
 LIBS=
 
 db++: db++.cpp ${OBJECTS}
@@ -30,10 +30,6 @@ ${LIBDIR}/lib%.a: % ${LIBDIR}
 	make -C $@
 
 clean:
-	for lib in ${LIBS}
-	do
-		make -C ${lib} clean
-	done
-
 	rm -Rf ${OBJDIR}
 	rm -Rf ${LIBDIR}
+	rm -f db++
