@@ -11,8 +11,11 @@ LIBDIR=./lib
 OBJECTS=${OBJDIR}/requestfactory.o ${OBJDIR}/logger.o
 LIBS=
 
-db++: db++.cpp ${OBJECTS}
+db++: db++.cpp ${OBJDIR} ${LIBDIR} ${OBJECTS}
 	$(GCC) ${CXX_FLAGS} -o $@ $< ${OBJECTS} ${LD_FLAGS} ${LIBS}
+
+install: db++
+	cp db++ /usr/bin/
 
 ${LIBDIR}:
 	mkdir -p ${LIBDIR}
@@ -20,10 +23,10 @@ ${LIBDIR}:
 ${OBJDIR}:
 	mkdir -p ${OBJDIR}
 
-${OBJDIR}/%.o: %.cpp %.h ${OBJDIR}
+${OBJDIR}/%.o: %.cpp %.h
 	$(GCC) ${CXX_FLAGS} -c -o $@ $<
 
-${LIBDIR}/lib%.a: % ${LIBDIR}
+${LIBDIR}/lib%.a: %
 	$(AR) ${AR_FLAGS} $@ %/${OBJDIR}/*
 
 %: ./%/
