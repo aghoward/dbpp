@@ -109,13 +109,18 @@ std::string execute(std::shared_ptr<ExecutionContext> context, const std::string
     if (context->extension != ""s)
         url += "."s + context->extension;
 
+    context->logger.log("Trying: \""s + url + "\"\r");
     auto resp = context->request_factory.make_request(url);
-    if (statusCodeIndicatesExistance(resp.status_code))
-        context->logger.log("\""s + url + "\" - "s + std::to_string(resp.status_code));
 
+    if (statusCodeIndicatesExistance(resp.status_code)) {
+        context->logger.log_line("\""s + url + "\" - "s + std::to_string(resp.status_code));
+    }
+
+    context->logger.log("Trying: \""s + url + "\"\r");
     auto dir_resp = context->request_factory.make_request(url + "/"s);
+
     if (statusCodeIndicatesExistance(dir_resp.status_code)) {
-        context->logger.log("\""s + url + "/\" - "s + std::to_string(dir_resp.status_code));
+        context->logger.log_line("\""s + url + "/\" - "s + std::to_string(dir_resp.status_code));
         return url;
     }
 
