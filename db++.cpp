@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "argparsing/argparsing.h"
+#include "argparsing_module.h"
 #include "logger.h"
 #include "requestfactory.h"
 #include "threadpool.h"
@@ -20,6 +21,7 @@ struct Arguments
     std::string username;
     std::string password;
     bool ignore_ssl_errors;
+    std::vector<uint16_t> ignore_codes;
 };
 
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
@@ -28,6 +30,10 @@ std::ostream& operator<<(std::ostream& out, const Arguments& args)
     out << "wordlist_file: " << args.wordlist_file << '\n';
     out << "recursive: " << (args.recursive ? "true" : "false") << '\n';
     out << "ignore_ssl_errors: " << (args.ignore_ssl_errors ? "true" : "false") << '\n';
+    out << "ignored_status_codes: ";
+    for (auto& code : args.ignore_codes)
+        out << std::to_string(code) << ' ';
+    out << '\n';
     return out;
 }
 
@@ -35,7 +41,7 @@ ap::ArgumentParser<Arguments> createArgumentParser()
 {
     using namespace std::string_literals;
 
-    return ap::ArgumentParserBuilder<Arguments>()
+    auto parser = ap::ArgumentParserBuilder<Arguments>()
         .add_optional(
             "wordlist_file"s,
             &Arguments::wordlist_file,
@@ -77,7 +83,16 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             false,
             { "-k"s, "--ignore-ssl-errors"s },
             "Ignore SSL errors"s)
+        .add_optional(
+            "ignore_codes"s,
+            &Arguments::ignore_codes,
+            { 404u, 400u },
+            { "-s"s, "--ignored-status-codes"s },
+            "Status codes to ignore"s)
         .build();
+
+    parser.register_module<ArgparsingModule>();
+    return parser;
 }
 
 std::vector<std::string> get_word_list(const std::string& file)
@@ -96,18 +111,31 @@ struct ExecutionContext
 {
     std::string base_url;
     std::string extension;
+    std::vector<uint16_t> ignored_status_codes;
 
     RequestFactory request_factory;
     Logger logger;
 
-    ExecutionContext(const std::string& url, const std::string& ext, const RequestFactory& rf)
-        : base_url(url), extension(ext), request_factory(rf), logger()
+    ExecutionContext(
+        const std::string& url,
+        const std::string& ext,
+        const RequestFactory& rf,
+        const std::vector<uint16_t>& status_codes)
+        : base_url(url),
+        extension(ext),
+        ignored_status_codes(status_codes),
+        request_factory(rf),
+        logger()
     {}
 };
 
-bool statusCodeIndicatesExistance(int status_code)
+bool statusCodeIndicatesExistance(const int status_code, const std::vector<uint16_t>& ignored_status_codes)
 {
-    return status_code != 404 && status_code != 400;
+    return std::find(
+        ignored_status_codes.begin(),
+        ignored_status_codes.end(),
+        static_cast<uint16_t>(status_code))
+            == ignored_status_codes.end();
 }
 
 std::string execute(std::shared_ptr<ExecutionContext> context, const std::string& item)
@@ -120,14 +148,14 @@ std::string execute(std::shared_ptr<ExecutionContext> context, const std::string
     context->logger.log("Trying: \""s + url + "\"\r");
     auto resp = context->request_factory.make_request(url);
 
-    if (statusCodeIndicatesExistance(resp.status_code)) {
+    if (statusCodeIndicatesExistance(resp.status_code, context->ignored_status_codes)) {
         context->logger.log_line("\""s + url + "\" - "s + std::to_string(resp.status_code));
     }
 
     context->logger.log("Trying: \""s + url + "\"\r");
     auto dir_resp = context->request_factory.make_request(url + "/"s);
 
-    if (statusCodeIndicatesExistance(dir_resp.status_code)) {
+    if (statusCodeIndicatesExistance(dir_resp.status_code, context->ignored_status_codes)) {
         context->logger.log_line("\""s + url + "/\" - "s + std::to_string(dir_resp.status_code));
         return url;
     }
@@ -148,7 +176,7 @@ std::vector<std::string> searchServer(const Arguments& args, const std::string& 
     using namespace std::string_literals;
 
     auto request_factory = RequestFactory(args.username, args.password, !args.ignore_ssl_errors);
-    auto context = std::make_shared<ExecutionContext>(base_url, args.extension, request_factory);
+    auto context = std::make_shared<ExecutionContext>(base_url, args.extension, request_factory, args.ignore_codes);
 
     auto work_pool = create_work_queue(args.wordlist_file);
 
