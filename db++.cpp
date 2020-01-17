@@ -19,6 +19,7 @@ struct Arguments
     bool recursive;
     std::string username;
     std::string password;
+    bool ignore_ssl_errors;
 };
 
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
@@ -26,6 +27,7 @@ std::ostream& operator<<(std::ostream& out, const Arguments& args)
     out << "base_url: " << args.base_url << '\n';
     out << "wordlist_file: " << args.wordlist_file << '\n';
     out << "recursive: " << (args.recursive ? "true" : "false") << '\n';
+    out << "ignore_ssl_errors: " << (args.ignore_ssl_errors ? "true" : "false") << '\n';
     return out;
 }
 
@@ -69,6 +71,12 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             ""s,
             { "-e"s, "--extension"s },
             "File extension to add to all guesses"s)
+        .add_optional(
+            "ignore_ssl_errors"s,
+            &Arguments::ignore_ssl_errors,
+            false,
+            { "-k"s, "--ignore-ssl-errors"s },
+            "Ignore SSL errors"s)
         .build();
 }
 
@@ -139,7 +147,7 @@ std::vector<std::string> searchServer(const Arguments& args, const std::string& 
 {
     using namespace std::string_literals;
 
-    auto request_factory = RequestFactory(args.username, args.password);
+    auto request_factory = RequestFactory(args.username, args.password, !args.ignore_ssl_errors);
     auto context = std::make_shared<ExecutionContext>(base_url, args.extension, request_factory);
 
     auto work_pool = create_work_queue(args.wordlist_file);
