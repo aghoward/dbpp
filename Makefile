@@ -1,7 +1,7 @@
 GCC ?=g++
 AR ?=ar
 
-CXX_FLAGS +=--std=c++17 -I. -I./argparsing -I./cdif -I../cpr/include -L../cpr/lib -Wall -Werror -pedantic -Wextra
+CXX_FLAGS +=--std=c++17 -I. -I./include -I./include/argparsing -I./include/cdif -I../cpr/include -L../cpr/lib -Wall -Werror -pedantic -Wextra
 LD_FLAGS +=-pthread -lcurl -lcpr 
 AR_FLAGS +=rcs
 
