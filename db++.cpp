@@ -187,6 +187,8 @@ std::vector<std::string> searchServer(const Arguments& args, const std::string& 
     std::copy_if(pool_results.begin(), pool_results.end(), std::back_inserter(directory_results),
         [] (const auto& item) { return item != ""s; });
 
+    context->logger.log_line();
+
     return directory_results;
 }
 

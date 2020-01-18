@@ -13,8 +13,8 @@ class Logger
         uint16_t line_length;
 
     public:
-        void log_line(const std::string& msg);
-        void log(const std::string& msg);
+        void log_line(const std::string& msg = "");
+        void log(const std::string& msg = "");
         void clear_line();
 };
 
