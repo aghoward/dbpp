@@ -3,7 +3,7 @@
 
 #include "parameters/arguments.h"
 #include "argparsing/argparsing.h"
-#include "parameters/argparsing_module.h"
+#include "parameters/parameter_conversions.h"
 
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
 {
@@ -69,9 +69,9 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::ignore_codes,
             { 404u, 400u },
             { "-s"s, "--ignored-status-codes"s },
-            "Status codes to ignore"s)
+            "Status codes to ignore"s,
+            status_code_parser_factory)
         .build();
 
-    parser.register_module<ArgparsingModule>();
     return parser;
 }

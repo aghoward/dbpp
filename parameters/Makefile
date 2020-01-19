@@ -7,7 +7,7 @@ AR_FLAGS +=rcs
 OBJDIR=./obj
 LIBDIR=../lib
 
-OBJECTS=${OBJDIR}/argparsing_module.o ${OBJDIR}/arguments.o
+OBJECTS=${OBJDIR}/parameter_conversions.o ${OBJDIR}/arguments.o
 LIBS=${LIBDIR}/libparameters.a
 
 .PRECIOUS: ${OBJDIR}/%.o
