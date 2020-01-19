@@ -8,11 +8,13 @@ AR_FLAGS +=rcs
 OBJDIR=./obj
 LIBDIR=./lib
 
-OBJECTS=${OBJDIR}/requestfactory.o ${OBJDIR}/logger.o
-LIBS=
+OBJECTS=${OBJDIR}/fileio.o
+LIBS=${LIBDIR}/librequests.a ${LIBDIR}/libmulti-threading.a ${LIBDIR}/libparameters.a
 
-db++: db++.cpp ${OBJDIR} ${LIBDIR} ${OBJECTS}
-	$(GCC) ${CXX_FLAGS} -o $@ $< ${OBJECTS} ${LD_FLAGS} ${LIBS}
+all: ${OBJDIR} ${LIBDIR} ${LIBS} ${OBJECTS} db++
+
+db++: db++.cpp ${OBJECTS} ${LIBS}
+	$(GCC) ${CXX_FLAGS} -o $@ $< ${OBJECTS} ${LIBS} ${LD_FLAGS}
 
 install: db++
 	cp db++ /usr/bin/
@@ -27,12 +29,12 @@ ${OBJDIR}/%.o: %.cpp %.h
 	$(GCC) ${CXX_FLAGS} -c -o $@ $<
 
 ${LIBDIR}/lib%.a: %
-	$(AR) ${AR_FLAGS} $@ %/${OBJDIR}/*
-
-%: ./%/
-	make -C $@
+	make -C $<
 
 clean:
+	make -C parameters clean
+	make -C multi-threading clean
+	make -C requests clean
 	rm -Rf ${OBJDIR}
 	rm -Rf ${LIBDIR}
 	rm -f db++

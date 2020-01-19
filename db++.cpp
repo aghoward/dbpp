@@ -6,202 +6,7 @@
 #include <vector>
 
 #include "argparsing/argparsing.h"
-#include "argparsing_module.h"
-#include "logger.h"
-#include "requestfactory.h"
-#include "threadpool.h"
-#include "workqueue.h"
-
-struct Arguments
-{
-    std::string base_url;
-    std::string extension;
-    std::string wordlist_file;
-    bool recursive;
-    std::string username;
-    std::string password;
-    bool ignore_ssl_errors;
-    std::vector<uint16_t> ignore_codes;
-};
-
-std::ostream& operator<<(std::ostream& out, const Arguments& args)
-{
-    out << "base_url: " << args.base_url << '\n';
-    out << "wordlist_file: " << args.wordlist_file << '\n';
-    out << "recursive: " << (args.recursive ? "true" : "false") << '\n';
-    out << "ignore_ssl_errors: " << (args.ignore_ssl_errors ? "true" : "false") << '\n';
-    out << "ignored_status_codes: ";
-    for (auto& code : args.ignore_codes)
-        out << std::to_string(code) << ' ';
-    out << '\n';
-    return out;
-}
-
-ap::ArgumentParser<Arguments> createArgumentParser()
-{
-    using namespace std::string_literals;
-
-    auto parser = ap::ArgumentParserBuilder<Arguments>()
-        .add_optional(
-            "wordlist_file"s,
-            &Arguments::wordlist_file,
-            "/usr/share/dirb/wordlists/common.txt"s,
-            { "-w"s, "--wordlist" },
-            "Wordlist containing words to try to find on server"s)
-        .add_optional(
-            "recursive_search"s,
-            &Arguments::recursive,
-            false,
-            { "-r"s, "--recursive"s },
-            "Recursive search"s)
-        .add_positional(
-            "base_url"s,
-            &Arguments::base_url,
-            ""s,
-            "URL to the server to attempt to find files from"s)
-        .add_optional(
-            "username"s,
-            &Arguments::username,
-            ""s,
-            { "-u"s, "--username"s },
-            "Username for basic authentication"s)
-        .add_optional(
-            "password"s,
-            &Arguments::password,
-            ""s,
-            { "-p"s, "--password"s },
-            "Password for basic authentication"s)
-        .add_optional(
-            "extension"s,
-            &Arguments::extension,
-            ""s,
-            { "-e"s, "--extension"s },
-            "File extension to add to all guesses"s)
-        .add_optional(
-            "ignore_ssl_errors"s,
-            &Arguments::ignore_ssl_errors,
-            false,
-            { "-k"s, "--ignore-ssl-errors"s },
-            "Ignore SSL errors"s)
-        .add_optional(
-            "ignore_codes"s,
-            &Arguments::ignore_codes,
-            { 404u, 400u },
-            { "-s"s, "--ignored-status-codes"s },
-            "Status codes to ignore"s)
-        .build();
-
-    parser.register_module<ArgparsingModule>();
-    return parser;
-}
-
-std::vector<std::string> get_word_list(const std::string& file)
-{
-    auto words = std::vector<std::string>();
-    std::ifstream fs(file);
-    std::string str;
-
-    while (std::getline(fs, str))
-        words.push_back(str);
-    
-    return words;
-}
-
-struct ExecutionContext
-{
-    std::string base_url;
-    std::string extension;
-    std::vector<uint16_t> ignored_status_codes;
-
-    RequestFactory request_factory;
-    Logger logger;
-
-    ExecutionContext(
-        const std::string& url,
-        const std::string& ext,
-        const RequestFactory& rf,
-        const std::vector<uint16_t>& status_codes)
-        : base_url(url),
-        extension(ext),
-        ignored_status_codes(status_codes),
-        request_factory(rf),
-        logger()
-    {}
-};
-
-bool statusCodeIndicatesExistance(const int status_code, const std::vector<uint16_t>& ignored_status_codes)
-{
-    return std::find(
-        ignored_status_codes.begin(),
-        ignored_status_codes.end(),
-        static_cast<uint16_t>(status_code))
-            == ignored_status_codes.end();
-}
-
-std::string execute(std::shared_ptr<ExecutionContext> context, const std::string& item)
-{
-    using namespace std::string_literals;
-    auto url = context->base_url + "/"s + item;
-    if (context->extension != ""s)
-        url += "."s + context->extension;
-
-    context->logger.log("Trying: \""s + url + "\"\r");
-    auto resp = context->request_factory.make_request(url);
-
-    if (statusCodeIndicatesExistance(resp.status_code, context->ignored_status_codes)) {
-        context->logger.log_line("\""s + url + "\" - "s + std::to_string(resp.status_code));
-    }
-
-    context->logger.log("Trying: \""s + url + "\"\r");
-    auto dir_resp = context->request_factory.make_request(url + "/"s);
-
-    if (statusCodeIndicatesExistance(dir_resp.status_code, context->ignored_status_codes)) {
-        context->logger.log_line("\""s + url + "/\" - "s + std::to_string(dir_resp.status_code));
-        return url;
-    }
-
-    return ""s;
-}
-
-std::shared_ptr<WorkQueue<std::string, 10>> create_work_queue(const std::string& wordlist_file)
-{
-    auto word_list = get_word_list(wordlist_file);
-    auto work_pool = std::make_shared<WorkQueue<std::string, 10>>();
-    work_pool->add_items(word_list.begin(), word_list.end());
-    return work_pool;
-}
-
-std::vector<std::string> searchServer(const Arguments& args, const std::string& base_url)
-{
-    using namespace std::string_literals;
-
-    auto request_factory = RequestFactory(args.username, args.password, !args.ignore_ssl_errors);
-    auto context = std::make_shared<ExecutionContext>(base_url, args.extension, request_factory, args.ignore_codes);
-
-    auto work_pool = create_work_queue(args.wordlist_file);
-
-    auto thread_pool = ThreadPool([&](const std::string& item) { return execute(context, item); }, work_pool);
-    auto pool_results = thread_pool.execute();
-
-    auto directory_results = std::vector<std::string>{};
-    std::copy_if(pool_results.begin(), pool_results.end(), std::back_inserter(directory_results),
-        [] (const auto& item) { return item != ""s; });
-
-    context->logger.log_line();
-
-    return directory_results;
-}
-
-void recursive_search_server(const Arguments& args)
-{
-    auto directories = searchServer(args, args.base_url);
-    while (!directories.empty()) {
-        auto dir = directories.back();
-        directories.pop_back();
-        auto results = searchServer(args, dir);
-        std::copy(results.begin(), results.end(), std::back_inserter(directories));
-    }
-}
+#include "requests/requestexecutor.h"
 
 int main(int argc, const char * argv[])
 {
@@ -214,13 +19,14 @@ int main(int argc, const char * argv[])
     }
 
     auto args = argresult.value();
-
     std::cout << args << std::endl;
 
+    auto request_executor = RequestExecutor(args);
+
     if (args.recursive)
-        recursive_search_server(args);
+        request_executor.recursive_search();
     else
-        searchServer(args, args.base_url);
+        request_executor.search();
 
     return 0;
 }

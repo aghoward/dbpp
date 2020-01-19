@@ -1,14 +1,12 @@
-#pragma once
-
 #include <algorithm>
+#include <cstdio>
 #include <functional>
 #include <iterator>
 #include <numeric>
 #include <string>
 #include <vector>
-#include <cstdio>
 
-#include "cdif/cdif.h"
+#include "parameters/argparsing_module.h"
 
 namespace impl {
     template <typename It>
@@ -57,16 +55,3 @@ namespace impl {
         return result;
     }
 }
-
-class ArgparsingModule : public cdif::IModule
-{
-    public:
-        void load(cdif::Container& ctx) override
-        {
-            ctx.bind<std::vector<uint16_t>, std::string>(
-                [&ctx] (const auto& parameter) {
-                    return impl::parse_status_code_list(parameter, ctx.template resolve<std::function<uint16_t(std::string)>>());
-                })
-                .build();
-        }
-};
