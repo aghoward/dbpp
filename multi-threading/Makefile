@@ -1,7 +1,7 @@
 GCC ?=g++
 AR ?=ar
 
-CXX_FLAGS +=--std=c++17 -I.. -I../include -I../include/argparsing -I../include/cdif -Wall -Werror -pedantic -Wextra
+CXX_FLAGS +=--std=c++17 -O3 -I.. -I../include -I../include/argparsing -I../include/cdif -Wall -Werror -pedantic -Wextra
 AR_FLAGS +=rcs
 
 OBJDIR=./obj
