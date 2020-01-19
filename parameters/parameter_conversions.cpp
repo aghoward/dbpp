@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-#include "parameters/argparsing_module.h"
+#include "parameters/parameter_conversions.h"
 
 namespace impl {
     template <typename It>
@@ -54,4 +54,14 @@ namespace impl {
 
         return result;
     }
+}
+
+std::function<std::vector<uint16_t>(const std::string&)> status_code_parser_factory(const cdif::Container& ctx)
+{
+    return [&] (const std::string& parameter)
+    {
+        return impl::parse_status_code_list(
+                parameter,
+                ctx.resolve<std::function<uint16_t(std::string)>>());
+    };
 }
