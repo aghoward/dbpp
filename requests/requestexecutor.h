@@ -1,7 +1,9 @@
 #pragma once
 
 #include <memory>
+#include <optional>
 #include <string>
+#include <vector>
 
 #include "parameters/arguments.h"
 #include "requests/executioncontext.h"
@@ -16,8 +18,9 @@ class RequestExecutor {
 
         bool status_code_indicates_existance(const int status_code) const;
         std::shared_ptr<WorkQueue<std::string, 10>> create_work_queue() const;
-        std::string execute(const std::string& item);
-        std::vector<std::string> search(const std::string& base_url);
+        std::optional<std::string> execute(const std::string& item, const std::string& request_template);
+        std::vector<std::string> execute(const std::string& item);
+        std::vector<std::string> search(const std::vector<std::string>& request_templates);
 
     public:
         RequestExecutor(const Arguments& args)

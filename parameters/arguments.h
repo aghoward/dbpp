@@ -10,7 +10,7 @@
 struct Arguments
 {
     std::string base_url;
-    std::string extension;
+    std::vector<std::string> request_templates;
     std::string wordlist_file;
     bool recursive;
     std::string username;

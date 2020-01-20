@@ -54,6 +54,26 @@ namespace impl {
 
         return result;
     }
+
+    std::vector<std::string> parse_request_template_list(const std::string& parameter)
+    {
+        auto result = std::vector<std::string>();
+        auto comma_it = std::find_if(std::begin(parameter), std::end(parameter), [] (const auto& c) { return c == ','; });
+        auto begin = std::begin(parameter);
+        while (comma_it != std::end(parameter))
+        {
+            auto element = std::string(begin, comma_it);
+            result.push_back(element);
+
+            begin = comma_it + 1;
+            comma_it = std::find_if(begin, std::end(parameter), [] (const auto& c) { return c == ','; });
+        }
+
+        auto element = std::string(begin, comma_it);
+        result.push_back(element);
+
+        return result;
+    }
 }
 
 std::function<std::vector<uint16_t>(const std::string&)> status_code_parser_factory(const cdif::Container& ctx)
@@ -64,4 +84,9 @@ std::function<std::vector<uint16_t>(const std::string&)> status_code_parser_fact
                 parameter,
                 ctx.resolve<std::function<uint16_t(std::string)>>());
     };
+}
+
+std::function<std::vector<std::string>(const std::string&)> request_template_parser_factory(const cdif::Container&)
+{
+    return impl::parse_request_template_list;
 }

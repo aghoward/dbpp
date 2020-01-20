@@ -3,15 +3,17 @@
 #include <algorithm>
 #include <cstdio>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
-#include "fileio.h"
 #include "parameters/arguments.h"
 #include "multi-threading/threadpool.h"
 #include "multi-threading/workqueue.h"
 #include "requests/executioncontext.h"
 #include "requests/requestfactory.h"
+#include "support/fileio.h"
+#include "support/template_formatting.h"
 
 bool RequestExecutor::status_code_indicates_existance(const int status_code) const
 {
@@ -22,29 +24,33 @@ bool RequestExecutor::status_code_indicates_existance(const int status_code) con
             == _args.ignore_codes.end();
 }
 
-std::string RequestExecutor::execute(const std::string& item)
+std::optional<std::string> RequestExecutor::execute(const std::string& item, const std::string& request_template)
 {
     using namespace std::string_literals;
-    auto url = _context->base_url + "/"s + item;
-    if (_context->extension != ""s)
-        url += "."s + _context->extension;
+    auto url = format_template(request_template, {{"{WORD}"s, item}, {"{BASE_URL}"s, _context->base_url}});
 
     _context->logger.log("Trying: \""s + url + "\"\r");
-    auto resp = _context->request_factory.make_request(url);
-
-    if (status_code_indicates_existance(resp.status_code)) {
-        _context->logger.log_line("\""s + url + "\" - "s + std::to_string(resp.status_code));
-    }
-
-    _context->logger.log("Trying: \""s + url + "\"\r");
-    auto dir_resp = _context->request_factory.make_request(url + "/"s);
-
-    if (status_code_indicates_existance(dir_resp.status_code)) {
-        _context->logger.log_line("\""s + url + "/\" - "s + std::to_string(dir_resp.status_code));
+    auto response = _context->request_factory.make_request(url);
+    if (status_code_indicates_existance(response.status_code))
+    {
+        _context->logger.log_line("\""s + url + "\" - "s + std::to_string(response.status_code));
         return url;
     }
 
-    return ""s;
+    return {};
+}
+
+std::vector<std::string> RequestExecutor::execute(const std::string& item)
+{
+    auto results = std::vector<std::string>();
+    for (const auto& request_template : _context->request_templates)
+    {
+        auto result = execute(item, request_template);
+        if (result)
+            results.push_back(result.value());
+    }
+
+    return results;
 }
 
 std::shared_ptr<WorkQueue<std::string, 10>> RequestExecutor::create_work_queue() const
@@ -55,37 +61,41 @@ std::shared_ptr<WorkQueue<std::string, 10>> RequestExecutor::create_work_queue()
     return work_pool;
 }
 
-std::vector<std::string> RequestExecutor::search(const std::string& base_url)
+std::vector<std::string> RequestExecutor::search(const std::vector<std::string>& request_templates)
 {
     using namespace std::string_literals;
 
-    _context = std::make_shared<ExecutionContext>(base_url, _args.extension, _request_factory, _args.ignore_codes);
+    _context = std::make_shared<ExecutionContext>(_args.base_url, request_templates, _request_factory, _args.ignore_codes);
     auto work_pool = create_work_queue();
     auto thread_pool = ThreadPool([&](const std::string& item) { return execute(item); }, work_pool);
 
     auto pool_results = thread_pool.execute();
 
-    auto directory_results = std::vector<std::string>{};
-    std::copy_if(pool_results.begin(), pool_results.end(), std::back_inserter(directory_results),
-        [] (const auto& item) { return item != ""s; });
+    auto found_items = std::vector<std::string>{};
+    for (const auto& pool_result : pool_results)
+        found_items.insert(found_items.end(), pool_result.begin(), pool_result.end());
 
     _context->logger.log_line();
 
-    return directory_results;
+    return found_items;
 }
 
 void RequestExecutor::search()
 {
-    search(_args.base_url);
+    search(_args.request_templates);
 }
 
 void RequestExecutor::recursive_search()
 {
-    auto directories = search(_args.base_url);
-    while (!directories.empty()) {
-        auto dir = directories.back();
-        directories.pop_back();
-        auto results = search(dir);
-        std::copy(results.begin(), results.end(), std::back_inserter(directories));
+    using namespace std::string_literals;
+
+    auto urls = search(_args.request_templates);
+    while (!urls.empty()) {
+        auto url = urls.back();
+        urls.pop_back();
+
+        auto new_template = url + "/{WORD}"s;
+        auto results = search({new_template});
+        urls.insert(urls.end(), results.begin(), results.end());
     }
 }

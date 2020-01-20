@@ -15,6 +15,10 @@ std::ostream& operator<<(std::ostream& out, const Arguments& args)
     for (auto& code : args.ignore_codes)
         out << std::to_string(code) << ' ';
     out << '\n';
+    out << "request_templates: ";
+    for (auto& request_template : args.request_templates)
+        out << '"' << request_template << "\" ";
+    out << '\n';
     return out;
 }
 
@@ -53,11 +57,12 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             { "-p"s, "--password"s },
             "Password for basic authentication"s)
         .add_optional(
-            "extension"s,
-            &Arguments::extension,
-            ""s,
-            { "-e"s, "--extension"s },
-            "File extension to add to all guesses"s)
+            "request_templates"s,
+            &Arguments::request_templates,
+            { "{BASE_URL}/{WORD}" },
+            { "-t"s, "--request-templates"s },
+            "Template defining how to construct URLs to fetch"s,
+            request_template_parser_factory)
         .add_optional(
             "ignore_ssl_errors"s,
             &Arguments::ignore_ssl_errors,

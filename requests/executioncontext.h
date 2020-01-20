@@ -10,7 +10,7 @@
 struct ExecutionContext
 {
     std::string base_url;
-    std::string extension;
+    std::vector<std::string> request_templates;
     std::vector<uint16_t> ignored_status_codes;
 
     RequestFactory request_factory;
@@ -18,11 +18,11 @@ struct ExecutionContext
 
     ExecutionContext(
         const std::string& url,
-        const std::string& ext,
+        const std::vector<std::string>& rts,
         const RequestFactory& rf,
         const std::vector<uint16_t>& status_codes)
         : base_url(url),
-        extension(ext),
+        request_templates(rts),
         ignored_status_codes(status_codes),
         request_factory(rf),
         logger()
