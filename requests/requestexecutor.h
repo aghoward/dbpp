@@ -25,7 +25,7 @@ class RequestExecutor {
     public:
         RequestExecutor(const Arguments& args)
             : _context(nullptr),
-            _request_factory(args.username, args.password, args.ignore_ssl_errors),
+            _request_factory(args.username, args.password, !args.ignore_ssl_errors),
             _args(args)
         {}
 
