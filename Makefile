@@ -8,8 +8,8 @@ AR_FLAGS +=rcs
 OBJDIR=./obj
 LIBDIR=./lib
 
-OBJECTS=${OBJDIR}/fileio.o
-LIBS=${LIBDIR}/librequests.a ${LIBDIR}/libmulti-threading.a ${LIBDIR}/libparameters.a
+OBJECTS=
+LIBS=${LIBDIR}/librequests.a ${LIBDIR}/libmulti-threading.a ${LIBDIR}/libparameters.a ${LIBDIR}/libsupport.a
 
 all: ${OBJDIR} ${LIBDIR} ${LIBS} ${OBJECTS} db++
 
@@ -35,6 +35,7 @@ clean:
 	make -C parameters clean
 	make -C multi-threading clean
 	make -C requests clean
+	make -C support clean
 	rm -Rf ${OBJDIR}
 	rm -Rf ${LIBDIR}
 	rm -f db++
