@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cctype>
 #include <cstdio>
 #include <functional>
 #include <iterator>
@@ -101,4 +102,26 @@ std::function<std::vector<uint32_t>(const std::string&)> content_length_parser_f
 std::function<std::vector<std::string>(const std::string&)> request_template_parser_factory(const cdif::Container&)
 {
     return impl::parse_request_template_list;
+}
+
+
+std::string to_upper(const std::string& input)
+{
+    auto output = std::string();
+    for (auto& c : input)
+        output += std::toupper(c);
+    return output;
+}
+
+std::function<RequestMethod(const std::string&)> request_method_parser_factory(const cdif::Container&)
+{
+    using namespace std::string_literals;
+
+    return [] (const std::string& arg) -> RequestMethod
+        {
+            auto method = to_upper(arg);
+            if (method == "HEAD"s)
+                return RequestMethod::HEAD;
+            return RequestMethod::GET;
+        };
 }

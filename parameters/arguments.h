@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "argparsing/argparsing.h"
+#include "requests/requestmethod.h"
 
 struct Arguments
 {
@@ -18,6 +19,7 @@ struct Arguments
     bool ignore_ssl_errors;
     std::vector<uint16_t> ignore_codes;
     std::vector<uint32_t> ignore_content_lengths;
+    RequestMethod request_method;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();

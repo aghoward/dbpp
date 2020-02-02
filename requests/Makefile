@@ -7,7 +7,7 @@ AR_FLAGS +=rcs
 OBJDIR=./obj
 LIBDIR=../lib
 
-OBJECTS=${OBJDIR}/requestexecutor.o ${OBJDIR}/requestfactory.o
+OBJECTS=${OBJDIR}/requestexecutor.o ${OBJDIR}/requestfactory.o ${OBJDIR}/requestmethod.o
 LIBS=${LIBDIR}/librequests.a
 
 .PRECIOUS: ${OBJDIR}/%.o

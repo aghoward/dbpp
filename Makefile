@@ -10,11 +10,14 @@ LIBDIR=./lib
 
 OBJECTS=
 LIBS=${LIBDIR}/librequests.a ${LIBDIR}/libmulti-threading.a ${LIBDIR}/libparameters.a ${LIBDIR}/libsupport.a
+EXE_LIB=${LIBDIR}/libdbpp.a
 
 all: ${OBJDIR} ${LIBDIR} ${LIBS} ${OBJECTS} db++
 
-db++: db++.cpp ${OBJECTS} ${LIBS}
-	$(GCC) ${CXX_FLAGS} -o $@ $< ${OBJECTS} ${LIBS} ${LD_FLAGS}
+db++: db++.cpp ${OBJECTS} ${EXE_LIB}
+	$(GCC) ${CXX_FLAGS} -o $@ $< ${OBJECTS} ${EXE_LIB} ${LD_FLAGS}
+
+.PRECIOUS: ${LIBDIR}/%.a
 
 install: db++
 	cp db++ /usr/bin/
@@ -27,6 +30,13 @@ ${OBJDIR}:
 
 ${OBJDIR}/%.o: %.cpp %.h
 	$(GCC) ${CXX_FLAGS} -c -o $@ $<
+
+${EXE_LIB}: ${LIBS}
+	for lib in ${LIBS}; do \
+		${AR} -x $$lib; \
+	done;
+	${AR} ${AR_FLAGS} ${EXE_LIB} *.o
+	rm *.o
 
 ${LIBDIR}/lib%.a: %
 	make -C $<

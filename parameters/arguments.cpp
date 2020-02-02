@@ -8,6 +8,7 @@
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
 {
     out << "base_url: " << args.base_url << '\n';
+    out << "request_method: " << args.request_method << '\n';
 
     out << "wordlist_file: " << args.wordlist_file << '\n';
 
@@ -93,6 +94,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             { "-c"s, "--ignored-content-lengths"s },
             "Content lengths to ignore"s,
             content_length_parser_factory)
+        .add_optional(
+            "request_method"s,
+            &Arguments::request_method,
+            RequestMethod::HEAD,
+            { "-X"s, "--request-method"s },
+            "HTTP method to use when making requests"s,
+            request_method_parser_factory)
         .build();
 
     return parser;
