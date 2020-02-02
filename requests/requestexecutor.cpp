@@ -7,6 +7,8 @@
 #include <string>
 #include <vector>
 
+#include <cpr/cpr.h>
+
 #include "parameters/arguments.h"
 #include "multi-threading/threadpool.h"
 #include "multi-threading/workqueue.h"
@@ -24,6 +26,21 @@ bool RequestExecutor::status_code_indicates_existance(const int status_code) con
             == _args.ignore_codes.end();
 }
 
+bool RequestExecutor::passes_content_length_check(const uint32_t content_length) const
+{
+    return std::find(
+        _args.ignore_content_lengths.begin(),
+        _args.ignore_content_lengths.end(),
+        static_cast<uint32_t>(content_length))
+            == _args.ignore_content_lengths.end();
+}
+
+bool RequestExecutor::response_passes_checks(cpr::Response& response) const
+{
+    return status_code_indicates_existance(response.status_code) &&
+        passes_content_length_check(std::atoi(response.header["Content-Length"].c_str()));
+}
+
 std::optional<std::string> RequestExecutor::execute(const std::string& item, const std::string& request_template)
 {
     using namespace std::string_literals;
@@ -31,7 +48,7 @@ std::optional<std::string> RequestExecutor::execute(const std::string& item, con
 
     _context->logger.log("Trying: \""s + url + "\"\r");
     auto response = _context->request_factory.make_request(url);
-    if (status_code_indicates_existance(response.status_code))
+    if (response_passes_checks(response))
     {
         _context->logger.log_line("\""s + url + "\" - "s + std::to_string(response.status_code));
         return url;

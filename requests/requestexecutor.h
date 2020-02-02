@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 
+#include <cpr/cpr.h>
+
 #include "parameters/arguments.h"
 #include "requests/executioncontext.h"
 #include "requests/requestfactory.h"
@@ -17,6 +19,9 @@ class RequestExecutor {
         Arguments _args;
 
         bool status_code_indicates_existance(const int status_code) const;
+        bool passes_content_length_check(const uint32_t content_length) const;
+        bool response_passes_checks(cpr::Response& response) const;
+
         std::shared_ptr<WorkQueue<std::string, 10>> create_work_queue() const;
         std::optional<std::string> execute(const std::string& item, const std::string& request_template);
         std::vector<std::string> execute(const std::string& item);

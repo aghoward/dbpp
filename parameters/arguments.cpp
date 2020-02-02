@@ -8,13 +8,23 @@
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
 {
     out << "base_url: " << args.base_url << '\n';
+
     out << "wordlist_file: " << args.wordlist_file << '\n';
+
     out << "recursive: " << (args.recursive ? "true" : "false") << '\n';
+
     out << "ignore_ssl_errors: " << (args.ignore_ssl_errors ? "true" : "false") << '\n';
+
     out << "ignored_status_codes: ";
     for (auto& code : args.ignore_codes)
         out << std::to_string(code) << ' ';
     out << '\n';
+
+    out << "ignored_content_lengths: ";
+    for (auto& cl : args.ignore_content_lengths)
+        out << std::to_string(cl) << ' ';
+    out << '\n';
+
     out << "request_templates: ";
     for (auto& request_template : args.request_templates)
         out << '"' << request_template << "\" ";
@@ -76,6 +86,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             { "-s"s, "--ignored-status-codes"s },
             "Status codes to ignore"s,
             status_code_parser_factory)
+        .add_optional(
+            "ignore_content_lengths"s,
+            &Arguments::ignore_content_lengths,
+            { },
+            { "-c"s, "--ignored-content-lengths"s },
+            "Content lengths to ignore"s,
+            content_length_parser_factory)
         .build();
 
     return parser;

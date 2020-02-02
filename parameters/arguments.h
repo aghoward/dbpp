@@ -17,6 +17,7 @@ struct Arguments
     std::string password;
     bool ignore_ssl_errors;
     std::vector<uint16_t> ignore_codes;
+    std::vector<uint32_t> ignore_content_lengths;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();
