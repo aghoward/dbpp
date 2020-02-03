@@ -50,11 +50,6 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             false,
             { "-r"s, "--recursive"s },
             "Recursive search"s)
-        .add_positional(
-            "base_url"s,
-            &Arguments::base_url,
-            ""s,
-            "URL to the server to attempt to find files from"s)
         .add_optional(
             "username"s,
             &Arguments::username,
@@ -101,6 +96,11 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             { "-X"s, "--request-method"s },
             "HTTP method to use when making requests"s,
             request_method_parser_factory)
+        .add_positional(
+            "base_url"s,
+            &Arguments::base_url,
+            ""s,
+            "URL to the server to attempt to find files from"s)
         .build();
 
     return parser;
