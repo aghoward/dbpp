@@ -12,21 +12,24 @@ int main(int argc, const char * argv[])
 {
     auto parser = createArgumentParser();
     auto argresult = parser.parse(argc, argv);
-    if (!argresult)
-    {
-        std::cerr << parser.usage(argv[0]) << std::endl;
-        return 1;
-    }
 
-    auto args = argresult.value();
-    std::cout << args << std::endl;
+    return argresult.match(
+        [] (const auto& args) {
+            std::cout << args << std::endl;
 
-    auto request_executor = RequestExecutor(args);
+            auto request_executor = RequestExecutor(args);
 
-    if (args.recursive)
-        request_executor.recursive_search();
-    else
-        request_executor.search();
+            if (args.recursive)
+                request_executor.recursive_search();
+            else
+                request_executor.search();
 
-    return 0;
+            return 0;
+        },
+        [&] (const auto& error) {
+            std::cerr << parser.usage(argv[0]) << std::endl << std::endl;
+            std::cerr << parser.get_error_message(error) << std::endl;
+
+            return 1;
+        });
 }
