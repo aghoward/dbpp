@@ -1,6 +1,5 @@
 #pragma once
 
-#include <array>
 #include <cstddef>
 #include <future>
 #include <memory>
@@ -11,30 +10,27 @@
 #include "worker.h"
 #include "workqueue.h"
 
-template <std::size_t TPoolSize, typename TWorkItem, typename TWorkFunc, typename TResultItem = std::invoke_result_t<TWorkFunc, TWorkItem>>
+template <typename TWorkItem, typename TWorkFunc, typename TResultItem = std::invoke_result_t<TWorkFunc, TWorkItem>>
 class ThreadPool
 {
     private:
-        using TWorkPool = std::shared_ptr<WorkQueue<TWorkItem, TPoolSize>>;
-        using TPool = std::array<Worker<TPoolSize, TWorkItem, TResultItem, TWorkFunc>, TPoolSize>;
+        using TWorkPool = std::shared_ptr<WorkQueue<TWorkItem>>;
+        using TPool = std::vector<Worker<TWorkItem, TResultItem, TWorkFunc>>;
         
         TWorkPool _work_pool;
         TPool _workers;
 
-        template <std::size_t ... Indices>
-        TPool build_pool_h(TWorkFunc func, std::index_sequence<Indices...>) const
+        TPool build_pool(TWorkFunc func, std::size_t pool_size) const
         {
-            return { Worker<TPoolSize, TWorkItem, TResultItem, TWorkFunc>(_work_pool, Indices, func) ... };
-        }
-
-        TPool build_pool(TWorkFunc func) const
-        {
-            return build_pool_h(func, std::make_index_sequence<TPoolSize>{});
+            auto pool = TPool();
+            for (auto i = 0u; i < pool_size; i++)
+                pool.push_back(Worker<TWorkItem, TResultItem, TWorkFunc>(_work_pool, i, func));
+            return pool;
         }
 
     public:
         ThreadPool(TWorkFunc func, TWorkPool work_pool)
-            : _work_pool(work_pool), _workers(build_pool(func))
+            : _work_pool(work_pool), _workers(build_pool(func, _work_pool->pool_size()))
         {}
 
         std::vector<TResultItem> execute()

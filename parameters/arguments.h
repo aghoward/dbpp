@@ -20,6 +20,7 @@ struct Arguments
     std::vector<uint16_t> ignore_codes;
     std::vector<uint32_t> ignore_content_lengths;
     RequestMethod request_method;
+    uint32_t thread_count;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();

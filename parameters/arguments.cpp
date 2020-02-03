@@ -9,6 +9,7 @@ std::ostream& operator<<(std::ostream& out, const Arguments& args)
 {
     out << "base_url: " << args.base_url << '\n';
     out << "request_method: " << args.request_method << '\n';
+    out << "thread_count: " << std::to_string(args.thread_count) << '\n';
 
     out << "wordlist_file: " << args.wordlist_file << '\n';
 
@@ -96,6 +97,12 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             { "-X"s, "--request-method"s },
             "HTTP method to use when making requests"s,
             request_method_parser_factory)
+        .add_optional(
+            "thread_count"s,
+            &Arguments::thread_count,
+            10u,
+            { "-T"s, "--thread-count"s },
+            "Number of threads to use for making requests"s)
         .add_positional(
             "base_url"s,
             &Arguments::base_url,

@@ -1,25 +1,25 @@
 #pragma once
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <list>
 #include <type_traits>
+#include <vector>
 
 template <typename T>
 using remove_cvref_t = std::remove_cv_t<std::remove_reference_t<T>>;
 
-template <typename TWorkItem, std::size_t QueueSize>
+template <typename TWorkItem>
 class WorkQueue
 {
     private:
-        using TWorkPool = std::array<std::list<TWorkItem>, QueueSize>;
+        using TWorkPool = std::vector<std::list<TWorkItem>>;
         TWorkPool _work_pool;
         typename TWorkPool::iterator _next;
 
     public:
-        WorkQueue()
-            : _work_pool(), _next(_work_pool.begin())
+        explicit WorkQueue(std::size_t queue_size)
+            : _work_pool(queue_size), _next(_work_pool.begin())
         {}
 
         template <typename T, typename = std::enable_if<std::is_same_v<remove_cvref_t<T>, remove_cvref_t<TWorkItem>>>>
@@ -51,6 +51,11 @@ class WorkQueue
         bool is_empty() const
         {
             return std::all_of(_work_pool.begin(), _work_pool.end(), [] (auto&& items) { return items.empty(); });
+        }
+
+        std::size_t pool_size() const
+        {
+            return _work_pool.size();
         }
 };
 

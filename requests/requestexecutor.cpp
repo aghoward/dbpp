@@ -70,10 +70,10 @@ std::vector<std::string> RequestExecutor::execute(const std::string& item)
     return results;
 }
 
-std::shared_ptr<WorkQueue<std::string, 10>> RequestExecutor::create_work_queue() const
+std::shared_ptr<WorkQueue<std::string>> RequestExecutor::create_work_queue(std::size_t queue_size) const
 {
     auto word_list = get_word_list(_args.wordlist_file);
-    auto work_pool = std::make_shared<WorkQueue<std::string, 10>>();
+    auto work_pool = std::make_shared<WorkQueue<std::string>>(queue_size);
     work_pool->add_items(word_list.begin(), word_list.end());
     return work_pool;
 }
@@ -83,8 +83,9 @@ std::vector<std::string> RequestExecutor::search(const std::vector<std::string>&
     using namespace std::string_literals;
 
     _context = std::make_shared<ExecutionContext>(_args.base_url, request_templates, _request_factory, _args.ignore_codes);
-    auto work_pool = create_work_queue();
-    auto thread_pool = ThreadPool([&](const std::string& item) { return execute(item); }, work_pool);
+    auto work_pool = create_work_queue(_args.thread_count);
+    std::function work_func = [&](const std::string& item) { return execute(item); };
+    auto thread_pool = ThreadPool(work_func, work_pool);
 
     auto pool_results = thread_pool.execute();
 

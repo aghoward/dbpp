@@ -7,11 +7,11 @@
 #include <optional>
 #include <thread>
 
-template <std::size_t TotalWorkers, typename TWorkItem, typename TResultItem, typename TWorkFunc>
+template <typename TWorkItem, typename TResultItem, typename TWorkFunc>
 class Worker
 {
     private:
-        using TWorkPool = std::shared_ptr<WorkQueue<TWorkItem, TotalWorkers>>;
+        using TWorkPool = std::shared_ptr<WorkQueue<TWorkItem>>;
         TWorkPool _work_pool;
         std::size_t _worker_id;
         TWorkFunc _func;
