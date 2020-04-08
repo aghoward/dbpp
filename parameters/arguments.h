@@ -21,6 +21,7 @@ struct Arguments
     std::vector<uint32_t> ignore_content_lengths;
     RequestMethod request_method;
     uint32_t thread_count;
+    std::string request_body;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();

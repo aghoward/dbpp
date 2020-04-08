@@ -41,16 +41,32 @@ bool RequestExecutor::response_passes_checks(cpr::Response& response) const
         passes_content_length_check(std::atoi(response.header["Content-Length"].c_str()));
 }
 
+cpr::Response RequestExecutor::get_response(const std::string& url, const std::string& data)
+{
+    using namespace std::string_literals;
+
+    if (data == ""s)
+    {
+        _context->logger.log("Trying: \""s + url + "\"\r"s);
+        return _context->request_factory.make_request(url);
+    }
+
+    _context->logger.log("Trying: \""s + url + "\" - \"" + data + "\"\r"s);
+    return _context->request_factory.make_request(url, data);
+}
+
 std::optional<std::string> RequestExecutor::execute(const std::string& item, const std::string& request_template)
 {
     using namespace std::string_literals;
     auto url = format_template(request_template, {{"{WORD}"s, item}, {"{BASE_URL}"s, _context->base_url}});
+    auto data = format_template(_context->request_data, {{"{WORD}"s, item}, {"{BASE_URL}"s, _context->base_url}});
 
-    _context->logger.log("Trying: \""s + url + "\"\r");
-    auto response = _context->request_factory.make_request(url);
+    auto response = get_response(url, data);
+
     if (response_passes_checks(response))
     {
-        _context->logger.log_line("\""s + url + "\" - "s + std::to_string(response.status_code));
+        auto message_addendum = (data != ""s) ? "\" - \""s + data : ""s;
+        _context->logger.log_line("\""s + url + message_addendum + "\" - "s + std::to_string(response.status_code));
         return url;
     }
 
@@ -82,7 +98,7 @@ std::vector<std::string> RequestExecutor::search(const std::vector<std::string>&
 {
     using namespace std::string_literals;
 
-    _context = std::make_shared<ExecutionContext>(_args.base_url, request_templates, _request_factory, _args.ignore_codes);
+    _context = std::make_shared<ExecutionContext>(_args.base_url, request_templates, _request_factory, _args.ignore_codes, _args.request_body);
     auto work_pool = create_work_queue(_args.thread_count);
     std::function work_func = [&](const std::string& item) { return execute(item); };
     auto thread_pool = ThreadPool(work_func, work_pool);

@@ -18,10 +18,14 @@ class RequestFactory
         template <typename ... TArgs>
         cpr::Response _make_request(TArgs&&... args) const
         {
+            using namespace std::string_literals;
+
             if (_request_method == RequestMethod::HEAD)
                 return cpr::Head(args...);
             if (_request_method == RequestMethod::GET)
                 return cpr::Get(args...);
+            if (_request_method == RequestMethod::POST)
+                return cpr::Post(args...);
             return cpr::Head(args...);
         }
 
@@ -42,4 +46,5 @@ class RequestFactory
         {}
 
         cpr::Response make_request(const std::string& url) const;
+        cpr::Response make_request(const std::string& url, const std::string& body_data) const;
 };

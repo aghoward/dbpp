@@ -103,6 +103,12 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             10u,
             { "-T"s, "--thread-count"s },
             "Number of threads to use for making requests"s)
+        .add_optional(
+            "request_data"s,
+            &Arguments::request_body,
+            ""s,
+            { "-d"s, "--data"s },
+            "Body of the post request as x-www-form-urlencoded data"s)
         .add_positional(
             "base_url"s,
             &Arguments::base_url,

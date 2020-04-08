@@ -5,7 +5,8 @@
 enum class RequestMethod
 {
     GET,
-    HEAD
+    HEAD,
+    POST
 };
 
 std::ostream& operator<<(std::ostream& out, const RequestMethod& request_method);
