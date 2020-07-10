@@ -10,6 +10,7 @@
 
 struct Arguments
 {
+    bool help;
     std::string base_url;
     std::vector<std::string> request_templates;
     std::string wordlist_file;

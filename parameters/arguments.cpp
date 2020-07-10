@@ -40,6 +40,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
 
     auto parser = ap::ArgumentParserBuilder<Arguments>()
         .add_optional(
+            "help"s,
+            &Arguments::help,
+            false,
+            { "-h"s, "--help"s },
+            "Print this help message and exit"s,
+            true)
+        .add_optional(
             "wordlist_file"s,
             &Arguments::wordlist_file,
             "/usr/share/dirb/wordlists/common.txt"s,

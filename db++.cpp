@@ -14,7 +14,12 @@ int main(int argc, const char * argv[])
     auto argresult = parser.parse(argc, argv);
 
     return argresult.match(
-        [] (const auto& args) {
+        [&] (const auto& args) {
+            if (args.help) {
+                std::cout << parser.help(argv[0]) << std::endl;
+                return 0;
+            }
+
             std::cout << args << std::endl;
 
             auto request_executor = RequestExecutor(args);
