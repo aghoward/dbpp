@@ -23,6 +23,7 @@ class RequestExecutor {
         bool response_passes_checks(cpr::Response& response) const;
 
         std::shared_ptr<WorkQueue<std::string>> create_work_queue(std::size_t queue_size) const;
+        cpr::Response get_response(const std::string& url, const std::string& data);
         std::optional<std::string> execute(const std::string& item, const std::string& request_template);
         std::vector<std::string> execute(const std::string& item);
         std::vector<std::string> search(const std::vector<std::string>& request_templates);
@@ -30,7 +31,12 @@ class RequestExecutor {
     public:
         RequestExecutor(const Arguments& args)
             : _context(nullptr),
-            _request_factory(args.username, args.password, !args.ignore_ssl_errors, args.request_method),
+            _request_factory(
+                args.username,
+                args.password,
+                !args.ignore_ssl_errors,
+                args.request_method,
+                args.content_type),
             _args(args)
         {}
 

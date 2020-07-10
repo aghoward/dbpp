@@ -10,6 +10,7 @@
 
 struct Arguments
 {
+    bool help;
     std::string base_url;
     std::vector<std::string> request_templates;
     std::string wordlist_file;
@@ -21,6 +22,8 @@ struct Arguments
     std::vector<uint32_t> ignore_content_lengths;
     RequestMethod request_method;
     uint32_t thread_count;
+    std::string request_body;
+    std::string content_type;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();

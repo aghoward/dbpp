@@ -8,5 +8,7 @@ std::ostream& operator<<(std::ostream& out, const RequestMethod& request_method)
         return out << "HEAD";
     if (request_method == RequestMethod::GET)
         return out << "GET";
+    if (request_method == RequestMethod::POST)
+        return out << "POST";
     return out << "Unknown";
 }

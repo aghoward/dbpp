@@ -40,6 +40,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
 
     auto parser = ap::ArgumentParserBuilder<Arguments>()
         .add_optional(
+            "help"s,
+            &Arguments::help,
+            false,
+            { "-h"s, "--help"s },
+            "Print this help message and exit"s,
+            true)
+        .add_optional(
             "wordlist_file"s,
             &Arguments::wordlist_file,
             "/usr/share/dirb/wordlists/common.txt"s,
@@ -50,7 +57,7 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::recursive,
             false,
             { "-r"s, "--recursive"s },
-            "Recursive search"s)
+            "Recurse all found items as if they are directories"s)
         .add_optional(
             "username"s,
             &Arguments::username,
@@ -68,7 +75,7 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::request_templates,
             { "{BASE_URL}/{WORD}" },
             { "-t"s, "--request-templates"s },
-            "Template defining how to construct URLs to fetch"s,
+            "Template defining how to construct URLs to fetch. Default: {BASE_URL}/{WORD}"s,
             request_template_parser_factory)
         .add_optional(
             "ignore_ssl_errors"s,
@@ -81,33 +88,45 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::ignore_codes,
             { 404u, 400u },
             { "-s"s, "--ignored-status-codes"s },
-            "Status codes to ignore"s,
+            "Ignore any responses having the indicated status codes. Default: 404,400"s,
             status_code_parser_factory)
         .add_optional(
             "ignore_content_lengths"s,
             &Arguments::ignore_content_lengths,
             { },
             { "-c"s, "--ignored-content-lengths"s },
-            "Content lengths to ignore"s,
+            "Ignore any responses having the indicated content lengths. Default: <none>"s,
             content_length_parser_factory)
         .add_optional(
             "request_method"s,
             &Arguments::request_method,
             RequestMethod::HEAD,
             { "-X"s, "--request-method"s },
-            "HTTP method to use when making requests"s,
+            "HTTP method to use when making requests. Possible values are HEAD, POST, GET. Default: HEAD"s,
             request_method_parser_factory)
         .add_optional(
             "thread_count"s,
             &Arguments::thread_count,
             10u,
             { "-T"s, "--thread-count"s },
-            "Number of threads to use for making requests"s)
+            "Number of threads to use for making requests. Default: 10"s)
+        .add_optional(
+            "request_data"s,
+            &Arguments::request_body,
+            ""s,
+            { "-d"s, "--data"s },
+            "Body of the post request. Changes request_method to POST"s)
+        .add_optional(
+            "content_type"s,
+            &Arguments::content_type,
+            "x-www-form-urlencoded"s,
+            { "-D"s, "--content-type"s },
+            "HTTP content type of the <request_data>. Default: x-www-form-urlencoded"s)
         .add_positional(
             "base_url"s,
             &Arguments::base_url,
             ""s,
-            "URL to the server to attempt to find files from"s)
+            "URL to the server to attempt to query"s)
         .build();
 
     return parser;
