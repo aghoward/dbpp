@@ -115,7 +115,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::request_body,
             ""s,
             { "-d"s, "--data"s },
-            "Body of the post request as x-www-form-urlencoded data"s)
+            "Body of the post request"s)
+        .add_optional(
+            "content_type"s,
+            &Arguments::content_type,
+            "x-www-form-urlencoded"s,
+            { "-D"s, "--content-type"s },
+            "HTTP content type of the <request_data>. Defaults to x-www-form-urlencoded"s)
         .add_positional(
             "base_url"s,
             &Arguments::base_url,

@@ -23,6 +23,7 @@ struct Arguments
     RequestMethod request_method;
     uint32_t thread_count;
     std::string request_body;
+    std::string content_type;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();

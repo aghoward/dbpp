@@ -23,12 +23,12 @@ cpr::Response RequestFactory::make_request(const std::string& url, const std::st
             cpr::Url(url),
             cpr::VerifySsl(_verify_ssl),
             cpr::Body(body_data),
-            cpr::Header{{"Content-Type"s, "x-www-form-urlencoded"s}});
+            cpr::Header{{"Content-Type"s, _content_type}});
     return cpr::Post(
         cpr::Url(url),
         cpr::VerifySsl(_verify_ssl),
         cpr::Authentication(_user, _pass),
         cpr::Body(body_data),
-        cpr::Header{{"Content-Type"s, "x-www-form-urlencoded"s}});
+        cpr::Header{{"Content-Type"s, _content_type}});
 }
 

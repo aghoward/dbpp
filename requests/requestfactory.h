@@ -14,6 +14,7 @@ class RequestFactory
         std::string _pass;
         bool _verify_ssl;
         RequestMethod _request_method;
+        std::string _content_type;
 
         template <typename ... TArgs>
         cpr::Response _make_request(TArgs&&... args) const
@@ -37,12 +38,14 @@ class RequestFactory
                 const std::string& user,
                 const std::string& pass,
                 bool verify_ssl,
-                const RequestMethod& request_method)
+                const RequestMethod& request_method,
+                const std::string& content_type)
             :
                 _user(user),
                 _pass(pass),
                 _verify_ssl(verify_ssl),
-                _request_method(request_method)
+                _request_method(request_method),
+                _content_type(content_type)
         {}
 
         cpr::Response make_request(const std::string& url) const;
