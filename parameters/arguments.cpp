@@ -32,9 +32,9 @@ std::ostream& operator<<(std::ostream& out, const Arguments& args)
         out << '"' << request_template << "\" ";
     out << '\n';
 
-    out << "headers: ";
+    out << "headers: \n";
     for (auto& header : args.headers)
-        out << "'" << header.name << "' = '" << header.value << "'" << '\n';
+        out << "\t'" << header.name << "' = '" << header.value << "'" << '\n';
     out << '\n';
     return out;
 }
