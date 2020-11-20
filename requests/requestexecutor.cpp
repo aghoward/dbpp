@@ -35,10 +35,15 @@ bool RequestExecutor::passes_content_length_check(const uint32_t content_length)
             == _args.ignore_content_lengths.end();
 }
 
+uint32_t get_content_length(cpr::Response& response)
+{
+    return std::atoi(response.header["Content-Length"].c_str());
+}
+
 bool RequestExecutor::response_passes_checks(cpr::Response& response) const
 {
     return status_code_indicates_existance(response.status_code) &&
-        passes_content_length_check(std::atoi(response.header["Content-Length"].c_str()));
+        passes_content_length_check(get_content_length(response));
 }
 
 cpr::Response RequestExecutor::get_response(const std::string& url, const std::string& data)
@@ -66,7 +71,15 @@ std::optional<std::string> RequestExecutor::execute(const std::string& item, con
     if (response_passes_checks(response))
     {
         auto message_addendum = (data != ""s) ? "\" - \""s + data : ""s;
-        _context->logger.log_line("\""s + url + message_addendum + "\" - "s + std::to_string(response.status_code));
+        _context->logger.log_line(
+            "\""s
+            + url
+            + message_addendum
+            + "\" - "s
+            + std::to_string(get_content_length(response))
+            + " (CL) - "s
+            + std::to_string(response.status_code)
+            + " (S)"s);
         return url;
     }
 

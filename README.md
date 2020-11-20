@@ -5,7 +5,7 @@
 ## Usage
 
 ```
-Usage: db++ [-h|--help] [-w|--wordlist <wordlist_file>] [-r|--recursive] [-u|--username <username>] [-p|--password <password>] [-t|--request-templates <request_templates>] [-k|--ignore-ssl-errors] [-s|--ignored-status-codes <ignore_codes>] [-c|--ignored-content-lengths <ignore_content_lengths>] [-X|--request-method <request_method>] [-T|--thread-count <thread_count>] [-d|--data <request_data>] [-D|--content-type <content_type>] <base_url> 
+Usage: ./db++ [-h|--help] [-w|--wordlist <wordlist_file>] [-r|--recursive] [-u|--username <username>] [-p|--password <password>] [-t|--request-templates <request_templates>] [-k|--ignore-ssl-errors] [-s|--ignored-status-codes <ignore_codes>] [-c|--ignored-content-lengths <ignore_content_lengths>] [-X|--request-method <request_method>] [-T|--thread-count <thread_count>] [-d|--data <request_data>] [-D|--content-type <content_type>] [-H|--headers <headers>] <base_url> 
 
     -h|--help                                              
                                                            Print this help message and exit                         
@@ -33,6 +33,8 @@ Usage: db++ [-h|--help] [-w|--wordlist <wordlist_file>] [-r|--recursive] [-u|--u
                                                            Body of the post request. Changes request_method to POST 
     -D|--content-type <content_type>                       
                                                            HTTP content type of the <request_data>. Default: x-www-form-urlencoded
+    -H|--headers <headers>                                 
+                                                           Headers to add to request. Default <none>                
      <base_url>                                            
                                                            URL to the server to attempt to query
 ```

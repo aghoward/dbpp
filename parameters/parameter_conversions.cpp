@@ -5,9 +5,11 @@
 #include <iterator>
 #include <numeric>
 #include <string>
+#include <tuple>
 #include <vector>
 
 #include "parameters/parameter_conversions.h"
+#include "models/header.h"
 
 namespace impl {
     template <typename It, typename TItem>
@@ -76,7 +78,35 @@ namespace impl {
 
         return result;
     }
+
+    template <typename It>
+    std::tuple<Header, It> parse_header(const It& begin, const It& end)
+    {
+        auto colon_it = std::find_if(begin, end, [] (const auto& c) { return c == ':'; });
+        auto value_beg = std::find_if(colon_it+1, end, [] (const auto& c) { return c == ' '; });
+        auto value_end = std::find_if(value_beg, end, [] (const auto& c) { return c == ';'; });
+        return {
+            { std::string(begin, colon_it), std::string(value_beg, value_end) },
+            value_end
+        };
+    }
+
+    std::vector<Header> parse_headers(const std::string& parameter)
+    {
+        auto result = std::vector<Header>();
+
+        auto it = std::begin(parameter);
+        while (it != std::end(parameter))
+        {
+            const auto& [header, end] = parse_header(it, std::end(parameter));
+            result.push_back(header);
+            it = end;
+        }
+
+        return result;
+    }
 }
+
 
 std::function<std::vector<uint16_t>(const std::string&)> status_code_parser_factory(const cdif::Container& ctx)
 {
@@ -124,4 +154,9 @@ std::function<RequestMethod(const std::string&)> request_method_parser_factory(c
                 return RequestMethod::HEAD;
             return RequestMethod::GET;
         };
+}
+
+std::function<std::vector<Header>(const std::string&)> header_parser_factory(const cdif::Container&)
+{
+    return impl::parse_headers;
 }
