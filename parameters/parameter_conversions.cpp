@@ -82,12 +82,13 @@ namespace impl {
     template <typename It>
     std::tuple<Header, It> parse_header(const It& begin, const It& end)
     {
-        auto colon_it = std::find_if(begin, end, [] (const auto& c) { return c == ':'; });
-        auto value_beg = std::find_if(colon_it+1, end, [] (const auto& c) { return c == ' '; });
+        auto name_beg = std::find_if(begin, end, [] (const auto& c) { return c != ' '; });
+        auto name_end = std::find_if(name_beg, end, [] (const auto& c) { return c == ':'; });
+        auto value_beg = std::find_if(name_end + 1, end, [] (const auto& c) { return c != ' '; });
         auto value_end = std::find_if(value_beg, end, [] (const auto& c) { return c == ';'; });
         return {
-            { std::string(begin, colon_it), std::string(value_beg, value_end) },
-            value_end
+            { std::string(name_beg, name_end), std::string(value_beg, value_end) },
+            value_end + 1
         };
     }
 
