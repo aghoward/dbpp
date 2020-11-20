@@ -7,6 +7,7 @@
 
 #include "argparsing/argparsing.h"
 #include "requests/requestmethod.h"
+#include "models/header.h"
 
 struct Arguments
 {
@@ -24,6 +25,7 @@ struct Arguments
     uint32_t thread_count;
     std::string request_body;
     std::string content_type;
+    std::vector<Header> headers;
 };
 
 ap::ArgumentParser<Arguments> createArgumentParser();

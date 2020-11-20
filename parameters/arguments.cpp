@@ -31,6 +31,11 @@ std::ostream& operator<<(std::ostream& out, const Arguments& args)
     for (auto& request_template : args.request_templates)
         out << '"' << request_template << "\" ";
     out << '\n';
+
+    out << "headers: ";
+    for (auto& header : args.headers)
+        out << "'" << header.name << "' = '" << header.value << "'" << '\n';
+    out << '\n';
     return out;
 }
 
@@ -122,6 +127,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             "x-www-form-urlencoded"s,
             { "-D"s, "--content-type"s },
             "HTTP content type of the <request_data>. Default: x-www-form-urlencoded"s)
+        .add_optional(
+            "headers"s,
+            &Arguments::headers,
+            { },
+            { "-H"s, "--headers"s },
+            "Headers to add to request. Default <none>"s,
+            header_parser_factory)
         .add_positional(
             "base_url"s,
             &Arguments::base_url,

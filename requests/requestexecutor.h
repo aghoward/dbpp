@@ -36,7 +36,8 @@ class RequestExecutor {
                 args.password,
                 !args.ignore_ssl_errors,
                 args.request_method,
-                args.content_type),
+                args.content_type,
+                args.headers),
             _args(args)
         {}
 

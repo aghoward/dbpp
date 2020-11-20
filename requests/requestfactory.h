@@ -2,10 +2,12 @@
 
 #include <string>
 #include <functional>
+#include <vector>
 
 #include <cpr/cpr.h>
 
 #include "requests/requestmethod.h"
+#include "models/header.h"
 
 class RequestFactory
 {
@@ -15,6 +17,7 @@ class RequestFactory
         bool _verify_ssl;
         RequestMethod _request_method;
         std::string _content_type;
+        std::vector<Header> _headers;
 
         template <typename ... TArgs>
         cpr::Response _make_request(TArgs&&... args) const
@@ -30,6 +33,8 @@ class RequestFactory
             return cpr::Head(args...);
         }
 
+        cpr::Header _create_header() const;
+
     public:
         RequestFactory()
             : _user(), _pass(), _request_method(RequestMethod::HEAD) {}
@@ -39,13 +44,15 @@ class RequestFactory
                 const std::string& pass,
                 bool verify_ssl,
                 const RequestMethod& request_method,
-                const std::string& content_type)
+                const std::string& content_type,
+                const std::vector<Header>& headers)
             :
                 _user(user),
                 _pass(pass),
                 _verify_ssl(verify_ssl),
                 _request_method(request_method),
-                _content_type(content_type)
+                _content_type(content_type),
+                _headers(headers)
         {}
 
         cpr::Response make_request(const std::string& url) const;
