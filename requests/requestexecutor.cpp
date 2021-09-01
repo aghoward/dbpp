@@ -46,27 +46,28 @@ bool RequestExecutor::response_passes_checks(cpr::Response& response) const
         passes_content_length_check(get_content_length(response));
 }
 
-cpr::Response RequestExecutor::get_response(const std::string& url, const std::string& data)
+cpr::Response RequestExecutor::get_response(
+        const std::string& url,
+        const std::string& data,
+        const std::map<std::string, std::string>& templates)
 {
     using namespace std::string_literals;
 
     if (data == ""s)
-    {
         _context->logger.log("Trying: \""s + url + "\"\r"s);
-        return _context->request_factory.make_request(url);
-    }
-
-    _context->logger.log("Trying: \""s + url + "\" - \"" + data + "\"\r"s);
-    return _context->request_factory.make_request(url, data);
+    else
+        _context->logger.log("Trying: \""s + url + "\" - \"" + data + "\"\r"s);
+    return _context->request_factory.make_request(url, data, templates);
 }
 
 std::optional<std::string> RequestExecutor::execute(const std::string& item, const std::string& request_template)
 {
     using namespace std::string_literals;
-    auto url = format_template(request_template, {{"{WORD}"s, item}, {"{BASE_URL}"s, _context->base_url}});
-    auto data = format_template(_context->request_data, {{"{WORD}"s, item}, {"{BASE_URL}"s, _context->base_url}});
+    auto templates = std::map<std::string, std::string>{{"{WORD}"s, item}, {"{BASE_URL}"s, _context->base_url}};
+    auto url = format_template(request_template, templates);
+    auto data = format_template(_context->request_data, templates);
 
-    auto response = get_response(url, data);
+    auto response = get_response(url, data, templates);
 
     if (response_passes_checks(response))
     {

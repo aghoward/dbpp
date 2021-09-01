@@ -1,7 +1,8 @@
 #pragma once
 
-#include <string>
 #include <functional>
+#include <map>
+#include <string>
 #include <vector>
 
 #include <cpr/cpr.h>
@@ -33,7 +34,30 @@ class RequestFactory
             return cpr::Head(args...);
         }
 
-        cpr::Header _create_header() const;
+        template <typename ... TArgs>
+        cpr::Response _make_request_with_data(
+                const std::string& data,
+                TArgs&&... parameters)
+        {
+            using namespace std::string_literals;
+            if (data == ""s)
+                return _make_request_with_authentication(std::forward<TArgs>(parameters)...);
+
+            if (_request_method == RequestMethod::DEFAULT)
+                _request_method = RequestMethod::POST;
+            return _make_request_with_authentication(std::forward<TArgs>(parameters)..., cpr::Body(data));
+        }
+
+        template <typename ... TArgs>
+        cpr::Response _make_request_with_authentication(TArgs&&... parameters) const
+        {
+            using namespace std::string_literals;
+            if (_user == ""s)
+                return _make_request(std::forward<TArgs>(parameters)...);
+            return _make_request(std::forward<TArgs>(parameters)..., cpr::Authentication(_user, _pass));
+        }
+
+        cpr::Header _create_header(const std::map<std::string, std::string>& templates) const;
 
     public:
         RequestFactory()
@@ -55,6 +79,8 @@ class RequestFactory
                 _headers(headers)
         {}
 
-        cpr::Response make_request(const std::string& url) const;
-        cpr::Response make_request(const std::string& url, const std::string& body_data) const;
+        cpr::Response make_request(
+                const std::string& url,
+                const std::string& body_data,
+                const std::map<std::string, std::string>& templates);
 };
