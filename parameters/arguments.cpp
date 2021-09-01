@@ -124,7 +124,7 @@ ap::ArgumentParser<Arguments> createArgumentParser()
         .add_optional(
             "content_type"s,
             &Arguments::content_type,
-            "x-www-form-urlencoded"s,
+            ""s,
             { "-D"s, "--content-type"s },
             "HTTP content type of the <request_data>. Default: x-www-form-urlencoded when data is provided"s)
         .add_optional(

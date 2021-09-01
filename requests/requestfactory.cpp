@@ -26,11 +26,11 @@ cpr::Header RequestFactory::_create_header(const std::map<std::string, std::stri
     using namespace std::string_literals;
 
     std::map<std::string, std::string> map = {};
-    for (const auto& header : _headers)
-        map[format_template(header.name, templates)] = format_template(header.value, templates);
-
     if (_content_type != ""s)
         map["Content-Type"s] = _content_type;
+
+    for (const auto& header : _headers)
+        map[format_template(header.name, templates)] = format_template(header.value, templates);
 
     return cpr::Header(map.begin(), map.end());
 }
