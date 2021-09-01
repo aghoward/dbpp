@@ -31,6 +31,10 @@ class RequestFactory
                 return cpr::Get(args...);
             if (_request_method == RequestMethod::POST)
                 return cpr::Post(args...);
+            if (_request_method == RequestMethod::PUT)
+                return cpr::Put(args...);
+            if (_request_method == RequestMethod::PATCH)
+                return cpr::Patch(args...);
             return cpr::Head(args...);
         }
 

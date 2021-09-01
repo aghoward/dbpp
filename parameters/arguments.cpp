@@ -105,9 +105,9 @@ ap::ArgumentParser<Arguments> createArgumentParser()
         .add_optional(
             "request_method"s,
             &Arguments::request_method,
-            RequestMethod::HEAD,
+            RequestMethod::DEFAULT,
             { "-X"s, "--request-method"s },
-            "HTTP method to use when making requests. Possible values are HEAD, POST, GET. Default: HEAD"s,
+            "HTTP method to use when making requests. Possible values are HEAD, POST, PUT, PATCH, GET. Default: HEAD"s,
             request_method_parser_factory)
         .add_optional(
             "thread_count"s,
@@ -120,13 +120,13 @@ ap::ArgumentParser<Arguments> createArgumentParser()
             &Arguments::request_body,
             ""s,
             { "-d"s, "--data"s },
-            "Body of the post request. Changes request_method to POST"s)
+            "Body of the post request. Changes request_method to POST if not otherwise provided"s)
         .add_optional(
             "content_type"s,
             &Arguments::content_type,
             "x-www-form-urlencoded"s,
             { "-D"s, "--content-type"s },
-            "HTTP content type of the <request_data>. Default: x-www-form-urlencoded"s)
+            "HTTP content type of the <request_data>. Default: x-www-form-urlencoded when data is provided"s)
         .add_optional(
             "headers"s,
             &Arguments::headers,

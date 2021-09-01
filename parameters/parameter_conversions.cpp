@@ -153,6 +153,14 @@ std::function<RequestMethod(const std::string&)> request_method_parser_factory(c
             auto method = to_upper(arg);
             if (method == "HEAD"s)
                 return RequestMethod::HEAD;
+            if (method == "POST"s)
+                return RequestMethod::POST;
+            if (method == "PUT"s)
+                return RequestMethod::PUT;
+            if (method == "PATCH"s)
+                return RequestMethod::PATCH;
+            if (method == "GET"s)
+                return RequestMethod::GET;
             return RequestMethod::GET;
         };
 }
