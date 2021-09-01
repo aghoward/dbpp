@@ -4,38 +4,53 @@
 #include "parameters/arguments.h"
 #include "argparsing/argparsing.h"
 #include "parameters/parameter_conversions.h"
+#include "requests/requestmethod.h"
 
 std::ostream& operator<<(std::ostream& out, const Arguments& args)
 {
+    using namespace std::string_literals;
+
     out << "base_url: " << args.base_url << '\n';
-    out << "request_method: " << args.request_method << '\n';
+
+    out << "request_method: ";
+    if (args.request_method == RequestMethod::DEFAULT && args.request_body != ""s)
+        out << RequestMethod::POST << '\n';
+    else
+        out << args.request_method << '\n';
+
     out << "thread_count: " << std::to_string(args.thread_count) << '\n';
-
     out << "wordlist_file: " << args.wordlist_file << '\n';
-
-    out << "recursive: " << (args.recursive ? "true" : "false") << '\n';
-
-    out << "ignore_ssl_errors: " << (args.ignore_ssl_errors ? "true" : "false") << '\n';
+    if (args.recursive)
+        out << "searching recursively" << '\n';
+    if (args.ignore_ssl_errors)
+        out << "ignoring ssl errors" << '\n';
 
     out << "ignored_status_codes: ";
     for (auto& code : args.ignore_codes)
         out << std::to_string(code) << ' ';
     out << '\n';
 
-    out << "ignored_content_lengths: ";
-    for (auto& cl : args.ignore_content_lengths)
-        out << std::to_string(cl) << ' ';
-    out << '\n';
+    if (args.ignore_content_lengths.size() > 0)
+    {
+        out << "ignored_content_lengths: ";
+        for (auto& cl : args.ignore_content_lengths)
+            out << std::to_string(cl) << ' ';
+        out << '\n';
+    }
 
     out << "request_templates: ";
     for (auto& request_template : args.request_templates)
         out << '"' << request_template << "\" ";
     out << '\n';
 
-    out << "headers: \n";
-    for (auto& header : args.headers)
-        out << "\t'" << header.name << "' = '" << header.value << "'" << '\n';
-    out << '\n';
+    if (args.headers.size() > 0)
+    {
+        out << "headers: \n";
+        for (auto& header : args.headers)
+            out << "\t'" << header.name << "' = '" << header.value << "'" << '\n';
+        out << '\n';
+    }
+
     return out;
 }
 
