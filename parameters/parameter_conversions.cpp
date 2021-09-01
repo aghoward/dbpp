@@ -88,7 +88,7 @@ namespace impl {
         auto value_end = std::find_if(value_beg, end, [] (const auto& c) { return c == ';'; });
         return {
             { std::string(name_beg, name_end), std::string(value_beg, value_end) },
-            value_end + 1
+            (value_end == end) ? end : value_end + 1
         };
     }
 
